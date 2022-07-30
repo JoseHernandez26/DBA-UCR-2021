@@ -1,0 +1,147 @@
+Universidad de Costa Rica, Sede Liberia
+IF-5100 Administración Bases de Datos
+Profesor: Andrés Cortés Fuentes
+a_cortes@municarrillo.go.cr
+Actualizado Martes 20 Abril de 2021
+
+Implementación y Puesta en Producción: LVM para Administrar Almacenamiento - Postgresql 
+
+Realizar un clone completo de la maquina virtual donde tenemos instalado el Postgresql para agregarle dos discos de 15G cada uno.
+
+Actualizamos la zona horaria para establecer la fecha y hora correcta...
+
+date 
+timedatectl
+timedatectl set-timezone America/Costa_Rica
+timedatectl
+date
+
+Verificamos los dos discos duros nuevos para crear el Grupo de Volumenes:
+
+fdisk -l
+
+Creamos lo Volumenes Fisicos a partir de cada disco duro:
+
+pvs
+pvcreate /dev/sdb
+pvcreate /dev/sdc
+pvs
+
+Creamos el Grupo de Volumenes:
+
+vgs
+vgcreate vg_BaseDatos /dev/sdb /dev/sdc
+vgs
+
+Creamos los Volumenes Logicos, los que equivales o hacen la función de las particiones normales en un disco duro:
+
+lvs
+lvcreate -n lv_BD_Produccion vg_BaseDatos -L 2G
+lvcreate -n lv_BD_Desarrollo vg_BaseDatos -L 10G
+lvs
+
+Procedemos a dar formato a los Volumenes Logicos para luego podermos motar:
+
+lsblk –f
+mkfs.ext4 /dev/vg_BaseDatos/lv_BD_Produccion
+mkfs.ext4 /dev/vg_BaseDatos/lv_BD_Desarrollo
+lsblk –f
+
+Editamos y agregamos las siguientes dos lineas al siguiente archivo, con el objetivo de que se monten autoamaticamente al iniciar el servidor: 
+
+vim /etc/fstab
+
+/dev/vg_BaseDatos/lv_BD_Produccion /BD_Produccion ext4 defaults 0 0
+/dev/vg_BaseDatos/lv_BD_Desarrollo /BD_Desarrollo ext4 defaults 0 0
+
+Nos vamos a la raiz:
+
+cd /
+
+Crearmos los puntos de montaje para los Volumenes Logicos:
+
+mkdir BD_Produccion
+mkdir BD_Desarrollo
+
+Montamos los Volumenes Logicos:
+
+df -vh
+
+mount BD_Produccion/
+mount BD_Desarrollo/
+
+Validamos que todo este bien con el comando:
+
+df -vh
+
+Ahora detenemos el servicio de Postgresql para cambiar la ruta por defecto donde se almacenan las Bases de Datos:
+
+/etc/init.d/postgresql stop
+/etc/init.d/postgresql status
+
+Nos vamos a la ruta por defecto para proceder a trasladar el contenido de la carpeta main a Volumen Logico montado en BD_Produccion:
+
+cd /var/lib/postgresql/12/
+ls -l
+du -sh main
+
+Con la siguiente instruccion copiamos la carpeta main y al mismo tiempo conservamos los permisos y el dueño de los ficheros y carpetas:
+
+rsync -vazul --progress main /BD_Produccion/
+
+NOTA:
+scp -r main /BD_Produccion/  Esta opción igual copia la carpeta, pero le asigna los permisos del usuario en este caso root. Luego tendriamos que ejecutar:
+chown postgres.postgres -R
+chmod 700 main -R
+FIN NOTA
+
+Nos movemos a la nueva ubicación para validar que todo se copio bien:
+
+cd /BD_Produccion
+ls -lt
+du -sh main/
+
+Procedemos a cambiar la ruta por defecto donde Posgresql guarda las BD, en el siguiente archivo...
+
+vim /etc/postgresql/12/main/postgresql.conf
+
+:se nu
+Enter
+
+La linea 41 la vamos a dejar así: 
+
+data_directory = '/BD_Produccion/main'
+
+Una vez realizado el cambio, levantamos el servicio:
+
+/etc/init.d/postgresql start
+/etc/init.d/postgresql status
+
+Para comprobar que se ha cambiado el espacio de almacenamiento:
+
+cd /BD_Produccion/main/base/
+
+Ejecutamos este comando en la terminal
+
+while true; do ls -lt; sleep 3; clear; done;
+  
+Creamos una BD nueva desde el PgAdmin y veremos como hay una carpeta nueva que corresponde a la BD recien creada.
+
+Ahora vamos asumir que nuestro Volumen Logico lv_BD_Produccion esta por llenarse y necesitamos ampliar su tamaño sin necesidad de bajar el servicio o el servidor.
+
+Bajo el escenario de la demostración agremamos a la maquina virtual dos discos de 15GB cada uno. 
+
+Ambos discos los agregamos a un Grupo de Volumenes llamado vg_BaseDatos
+
+Y creamos dos Volumenes Logicos: lv_BD_Produccion de 2GB y lv_BD_Desarrollo de 10GB, por lo tanto nos han quedado libres 18GB en el Grupo de Volumenes, que vamos autilizar para ampliar el tamaño de lv_BD_Produccion.
+
+Para ello debemos:
+
+df -vh
+lvs
+lvextend -L +13Gb /dev/vg_BaseDatos/lv_BD_Produccion
+lvs
+df -vh
+resize2fs /dev/vg_BaseDatos/lv_BD_Produccion
+lvs
+df -vh

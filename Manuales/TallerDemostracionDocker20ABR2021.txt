@@ -1,0 +1,88 @@
+Universidad de Costa Rica, Sede Liberia
+IF-5100 Administración Bases de Datos
+Profesor: Andrés Cortés Fuentes
+a_cortes@municarrillo.go.cr
+Actualizado el Martes 20 de Abril de 2021
+
+Implementación y Puesta en Producción: Docker de Postgresql 
+
+1 Creamos una maquina virtual nueva.
+
+2 Actualizamos la zona horaria para establecer la fecha y hora correcta...
+
+date 
+timedatectl
+timedatectl set-timezone America/Costa_Rica
+timedatectl
+date
+
+3 Antes de instalar Docker debemos contar con los siguientes servicios en nuestro servidor, los cuales debemos instalar como Super Usuario:
+
+sudo su
+
+apt install apt-transport-https
+apt install ca-certificates
+apt install curl
+apt install gnupg-agent
+apt install software-properties-common
+
+4 Agregamos la clave GPG oficial de Docker:
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+
+5 Usamos el siguiente comando para configurar el repositorio estable de la version a instalar.
+
+
+echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+
+6 Actualizamos los repositorios, para instalar la última versión de Docker Engine y del contenedor.
+
+apt update
+apt-get install docker-ce docker-ce-cli containerd.io
+
+7 Verificamos que el servicio este instalado y en ejecución:
+
+service docker status
+
+Link de referencia: https://docs.docker.com/engine/install/ubuntu/
+
+8 Una vez que tenemos docker instalado, ahora el siguiente paso es descargar la imagen que contiene la instalación de Postgres lista para ser utilizada, para ello ejecutamos el siguiente comando:
+
+docker pull postgres
+
+9 Una vez descargada la imagen, podemos ver los detalles de la imagen con el siguiente comando:
+
+docker image ls
+
+10 Para ejecutar la imagen descargada y crear los contenedores, suministramos los siguientes parametros: nombre del contenedor, una contraseña al usuario de la base de datos, redireccionar el puerto y el nombre de la imagen, para ello ejecutamos la siguiente línea:
+
+docker run --name contenedor-psql -e POSTGRES_PASSWORD=linux -d -p 2022:5432 postgres
+
+11 Una vez que tenemos creado nuestro contenedor de Docker con un servidor de PostgreSQL activo. Para poder conectarnos mediante el cliente psql al servidor, ejecutamos lo siguiente, introducimos la contraseña del usuario y ya podemos trabajar en nuestro Sistema Gestor de Bases de Datos.
+
+docker run -it --rm --link contenedor-psql:postgres postgres psql -h postgres -U postgres
+
+12 Para poder ver los contenedores en ejecución corremos:
+
+docker ps
+
+13 Y para detener un contendor ejecutamos:
+
+docker stop contenendor-psql
+docker ps
+
+14 Y para iniciar un contendor existente ejecutamos:
+NOTA: con la instrucción: sudo docker run --name contenedor-psql -e POSTGRES_PASSWORD=linux -d -p 5432:5432 postgres ejecutada pasos anteriores creamos el contenedor, esta instrucción solo se ejecuta una sola vez, ya que si lo intentamos de nuevo Docker nos va indicar que ya existe un contenedor con ese nombre. Para ello lo que debemos hacer es iniciarlo.
+
+docker start NombreDelContenedor
+docker ps
+
+15 Para finalizar, nos conectamos al contenedor por medio del PgAdmin4.
+
+Links de referencia: 
+https://todopostgresql.com/docker-con-postgresql-2/
+https://www.it-swarm.dev/es/postgresql/conexion-postgresql-en-un-contenedor-docker-desde-el-exterior/826006563/

@@ -1,0 +1,87 @@
+
+--funcion y trigger de INSERTAR a la tabla Provincia
+--Control de insercion por Bitácora
+
+CREATE FUNCTION  ControlInsertarProvincia()
+returns  TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+
+DECLARE
+
+vusuario varchar(15);
+vid_provincia integer;
+vnombre character(30);
+
+BEGIN
+vid_provincia  =NEW.id_provincia;
+vnombre=NEW.nombre;
+
+SELECT user INTO vusuario;
+
+INSERT INTO  public."BitacoraProvincia"
+
+
+VALUES (0,' ',vid_provincia ,vnombre,vusuario,'I',now());
+
+RETURN NEW;
+
+END
+
+$$;
+
+
+CREATE TRIGGER Trigger_TablaProvinciaInsertar
+AFTER INSERT
+
+ON public.provincia
+--CALL EL TRIGGER
+
+FOR EACH ROW EXECUTE PROCEDURE  ControlInsertarProvincia();
+
+
+-- FIN funcion y trigger de la tabla Provincia
+
+
+
+--funcion y trigger de ELIMINAR en la tabla Provincia
+
+CREATE FUNCTION  ControlEliminarProvincia()
+returns  TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+
+DECLARE
+
+vusuario varchar(15);
+vid_provincia integer;
+vnombre character(30);
+
+BEGIN
+vid_provincia  =OLD.id_provincia;
+vnombre=OLD.nombre;
+
+SELECT user INTO vusuario;
+
+INSERT INTO  public."BitacoraProvincia"
+
+-- 'D' Hace referencia a la sentencia DELETE
+VALUES (vid_provincia,vnombre,vid_provincia ,vnombre,vusuario,'D',now());
+
+RETURN NEW;
+
+END
+
+$$;
+
+
+CREATE TRIGGER Trigger_TablaProvinciaELIMINAR
+AFTER DELETE 
+
+ON public.provincia
+--CALL EL TRIGGER
+
+FOR EACH ROW EXECUTE PROCEDURE   ControlEliminarProvincia();
+
+
+-- fin funcion y trigger de la tabla Provincia

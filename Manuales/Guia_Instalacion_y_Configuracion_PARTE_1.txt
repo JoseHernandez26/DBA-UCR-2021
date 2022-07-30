@@ -1,0 +1,102 @@
+﻿IF5100 Administracion de Bases de Datos
+Profesor: Lic. Andres Alberto Cortes Fuentes
+Lunes 05 de Abril de 2021
+
+Descargar VirtualBox
+https://www.virtualbox.org/wiki/Downloads
+
+Descargar ISO Ubuntu Server 20.04.2
+https://ubuntu.com/download/server
+
+Descargar PgAdmin 4
+https://www.postgresql.org/ftp/pgadmin/pgadmin4/v5.1/windows/
+
+Descargar Putty
+https://www.putty.org/
+
+Descargar WiSCP
+https://winscp.net/eng/downloads.php
+
+Instalar PostgreSQL en Ubuntu Server 20.04
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-20-04-es
+
+Ingresamos con el usuario de la instalacion del Sistema Operativo y luego ejecutamos
+
+sudo su
+ponemos la clave del usuario de la instalacion del Sistema Operativo
+ENTER
+
+Y nos convertimos en super usuario.
+
+Pasamos de $
+A #
+
+Actualizamos la zona horaria para establecer la fecha y hora correcta...
+
+date 
+timedatectl
+timedatectl set-timezone America/Costa_Rica
+timedatectl
+date
+
+Instalamos el siguiente paquete relacionado con la gestión de la interfaces de red:
+
+apt update
+sudo apt install net-tools
+
+Ejecutamos el siguiente comando para ver las direcciones ip asignadas a las interfaces:
+
+ifconfig
+ENTER
+
+Nos conectamos de manera remota a traves de putty por ssh al servidor para proceder con las siguietnes labores administrativas:
+
+ssh gnu@192.168.56.x
+clave
+ENTER
+
+Ahora procedemos con la instalación del Gestor de Bases de Datos Postgresql
+
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+Para ingresar a la consola de psql desde el usuario de la instalacion de Ubuntu lo podemos hacer de las siguientes dos maneras:
+
+
+
+sudo -u postgres psql
+
+Cambiar clave usuario postgres
+alter user postgres with password 'linux';
+ALTER USER postgres WITH PASSWORD 'linux';
+
+HABILITAR ACCESO REMOTO AL PSQL
+
+vim /etc/postgresql/12/main/postgresql.conf
+
+Para ver las lineas ejecutamos:
+
+:se nu
+ENTER
+
+La linea 59 la editamos y establecemos de esta manera:
+listen_addresses = '*'
+
+vim /etc/postgresql/12/main/pg_hba.conf
+
+:se nu
+ENTER
+
+Despues de la linea 92 agregamos:
+host    all             all             192.168.56.0/24         md5
+
+Procedemos a reiniciar el servicio
+
+/etc/init.d/postgresql stop
+/etc/init.d/postgresql start
+/etc/init.d/postgresql status
+
+Instalar PgAdmin 4 en Windows
+
+Abrimos la aplicaci[on de PgAdmin4 y realizamos una conexion desde la maquina fisica al servidor utilizando la direccion de red que empieza con 192.168.56.X

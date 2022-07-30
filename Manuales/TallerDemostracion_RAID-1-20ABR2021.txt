@@ -1,0 +1,37 @@
+Universidad de Costa Rica, Sede Liberia
+IF-5100 Administración Bases de Datos
+Profesor: Andrés Cortés Fuentes
+a_cortes@municarrillo.go.cr
+Actualizado Martes 20 Abril de 2021
+
+Implementación y Puesta en Producción: RAIDS
+
+Crear una maquina virtual con los siguientes tamaños de discos duros. NOTA: Recordar marcar las opciones de Unidad de Estado Solido y Conectable en Caliente.
+
+Asignarle solo una tarjeta de red en modo Solo Anfitrion.
+
+1 10G Para el Sistema Operativo (Crear Particiones 1G - swap | 4G - / | restoG - /home)
+1 20G Para uso del RAID-1
+1 15G Para uso del RAID-1
+
+Dentro del Arreglo (5G - /produccion | restoG - /desarrollo)
+
+Una vez finalizada la instalación nos conectamos por medio de la terminal y ejutamos el siguiente comando que nos permite ver el estado y propiedades del arreglo:
+
+while true; do mdadm -D /dev/md/RAID1; sleep 3; clear; done;
+
+mdadm -D /dev/md/NombreArreglo
+
+En la consola de VirtualBox ejeuctamos, el siguiente comando para observar todo lo que sucede en el servidor:
+
+tail -f /var/log/syslog
+
+Ahora desde las propiedades de la Maquina Virtual procedemos a eliminar la conexión de uno de los discos del arreglo, y por medio de la terminal y la consola de VirtualBox observamos y analizamos lo que sucede.
+
+Ahora para reconstruir nuevamente el arreglo, volvemos a conectar el disco duro desde las propiedades de la Maquina Virtual con el siguiente comando:
+
+mdadm /dev/md/RAID1 --add /dev/sdc
+
+Ahora por medio de la terminal y la consola de VirtualBox observamos y analizamos lo que sucede.
+
+Link de referencia: https://www.digitalocean.com/community/tutorials/how-to-manage-raid-arrays-with-mdadm-on-ubuntu-16-04
